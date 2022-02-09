@@ -1,2 +1,3 @@
 # calculator
-電卓アプリ(C#)
+電卓アプリ
+Visual Studio 2017
