@@ -1,4 +1,6 @@
 # 電卓アプリ
 
 
-Visual Studio 2017 C#
+C# (Visual Studio 2017)
+
+
