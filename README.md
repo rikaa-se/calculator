@@ -1,4 +1,4 @@
-# calculator
-電卓アプリ
+# 電卓アプリ
 
-Visual Studio 2017
+
+Visual Studio 2017 C#
