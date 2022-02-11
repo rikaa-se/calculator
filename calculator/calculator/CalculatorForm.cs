@@ -42,7 +42,7 @@ namespace Calculator
         }
 
         /// <summary>
-        /// 計算基準値 (演算子→数値ボタン押下時に隠れる内部値)
+        /// 計算基準値 (演算子→数値ボタン押下時に隠れる内部値) / Null を許可する。
         /// </summary>
         private double? MemoryNumber { get; set; } = null;
 
@@ -159,10 +159,11 @@ namespace Calculator
         /// </summary>
         private void Initialize()
         {
-            ButtonType = ButtonType.Undefined;
-            LastCalculatorSymbol = ButtonType.Undefined;
-            DisplayNumber = 0;
-            MemoryNumber = null;
+            
+            ButtonType = ButtonType.Undefined;              // 押下されたボタン種別 を初期化
+            LastCalculatorSymbol = ButtonType.Undefined;    // 最後に押下された四則演算種別 を初期化
+            DisplayNumber = 0;                              // Display 表示を 0 に設定
+            MemoryNumber = null;                            // 計算基準値 を初期化
         }
 
         /// <summary>
@@ -171,17 +172,17 @@ namespace Calculator
         /// <param name="arg">ボタンで押下された入力値</param>
         private void SetNumber(int arg)
         {
-            // 直前の押下ボタンが演算子系統である場合、現在表示中の値をメモリに退避し入力値をそのまま画面に出す
+            // 直前の押下ボタンが演算子系統である場合
             if (IsCalcurator)
             {
-                MemoryNumber = DisplayNumber;
-                DisplayNumber = arg; // 暗黙の型変換なので本当はあまりよくない
+                MemoryNumber = DisplayNumber;   // 現在表示中の値を 計算基準値 に退避し入力値をそのまま画面に出す
+                DisplayNumber = arg;            // 表示中の値をディスプレイ値に設定 / 必ず一桁になる (Int -> Double への暗黙の型変換なので本当はあまりよくない)
             }
             // 表示中の値が NaN または ∞の場合
             else if(_displayNumber is double.NaN || _displayNumber is double.PositiveInfinity)
             {
                 // 入力値をそのままセット
-                DisplayNumber = arg;
+                DisplayNumber = arg; 
             }
             else
             {
@@ -224,6 +225,7 @@ namespace Calculator
         {
             try
             {
+                // 計算基準値が存在する場合、演算を実施する
                 if (MemoryNumber != null)
                 {
                     switch (LastCalculatorSymbol)
@@ -241,11 +243,12 @@ namespace Calculator
                             DisplayNumber = (double)MemoryNumber / DisplayNumber;
                             break;
                         default:
-                            // 通常は入ることはないが一応入れる
+                            // 通常は入ることはないが一応入れる。
+                            // 実際に例外は発生していないが、異常事態なので例外をスロー
                             throw new Exception("演算子の判定異常");
                     }
 
-                    // 表示中の内容をメモリに複写
+                    // 表示中の内容を 計算基準値 に複写
                     MemoryNumber = null;
                 }
                 else
@@ -257,6 +260,7 @@ namespace Calculator
                 ButtonType = buttonType;
                 if (IsCalcurator)
                 {
+                    // 四則演算系統であればそれも保持
                     LastCalculatorSymbol = ButtonType;
                 }
 
@@ -277,7 +281,7 @@ namespace Calculator
         }
 
         /// <summary>
-        /// 例外内のエラーメッセージを循環的に取得し、 / で連結します。
+        /// 例外内のエラーメッセージを再帰的に取得し、 / で連結します。
         /// </summary>
         /// <param name="e">例外</param>
         /// <returns></returns>
@@ -286,6 +290,7 @@ namespace Calculator
             string ret = e.Message;
             if(e.InnerException != null)
             {
+                // InnnerException が存在する場合、自身(GetErrorMessage() を呼び出す)
                 ret += " / " + GetErrorMessage(e.InnerException);
             }
 
