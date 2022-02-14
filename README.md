@@ -38,7 +38,7 @@ https://user-images.githubusercontent.com/97945555/153132339-2b9f6ccd-f600-4c45-
 1. 列挙体 (enum)
 1. プロパティ(副作用も含め)
 1. フラグの削減
-1. 命名規約 (C#はPascalが多いです)
+1. 命名規約 (C#はPascalが多い)
 1. 例外制御 (try-catch / catch する種別の複数設定)
  
 
