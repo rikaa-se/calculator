@@ -12,6 +12,7 @@ https://user-images.githubusercontent.com/97945555/153132339-2b9f6ccd-f600-4c45-
 　　　
 # コード
 
-https://github.com/rikaa-se/calculator/blob/main/calculator/calculator/CalculatorForm.cs
+[CalculatorForm.cs](https://github.com/rikaa-se/calculator/blob/main/calculator/calculator/CalculatorForm.cs)
+
 
 
