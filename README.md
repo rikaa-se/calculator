@@ -1,7 +1,7 @@
 # 電卓アプリ
 
-C# (Visual Studio 2017)　
-
+C# (Visual Studio 2017)
+　
 .NETFramework 4.7.1
 
 　
