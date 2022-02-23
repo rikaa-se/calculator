@@ -20,31 +20,80 @@ namespace Calculator
     /// </summary>
     public partial class CalculatorForm : Form
     {
+        #region *** 未使用 表示用の数値を整数部と小数部に分けて保持するクラス ***
+
+        /// <summary>
+        /// 表示用の数値を整数部と小数部に分けて保持する
+        /// </summary>
+        public class DisplayNums
+        {
+            /// <summary>
+            /// 整数部
+            /// get は public / set は private
+            /// </summary>
+            public double IntegerPart { get; private set; }
+
+            /// <summary>
+            /// 小数部
+            /// </summary>
+            public string DecimalPart { get; private set; }
+
+            /// <summary>
+            /// 実際の数値(文字列)
+            /// </summary>
+            public string DisplayNumber 
+            { 
+                get{ return IntegerPart.ToString() + (DecimalPart != null ? "." + DecimalPart : ""); } 
+            }
+
+            /// <summary>
+            /// コンストラクタ
+            /// </summary>
+            public DisplayNums()
+            {
+                IntegerPart = 0;
+                DecimalPart = null;
+            }
+
+            /// <summary>
+            /// 数値をセットします。
+            /// </summary>
+            /// <param name="i"></param>
+            /// <param name="d"></param>
+            public void Set(double i, string d) 
+            { 
+                IntegerPart = i;
+                DecimalPart = d;
+            }
+        }
+
+        #endregion
+
         #region *** クラス変数 / プロパティ ***
 
         /// <summary>
         /// 画面表示値(変数)
         /// Tips:プロパティで画面表示を連動させる副作用を用意するため用意。
         /// </summary>
-        private double _displayNumber = 0;
+        private decimal _displayNumber = 0;
         
         /// <summary>
         /// 画面表示値
         /// </summary>
-        private double DisplayNumber 
+        private decimal DisplayNumber 
         {
             get { return _displayNumber; }
             set 
             {
                 _displayNumber = value;
-                ResultLabel.Text = _displayNumber.ToString();
+                this.ResultLabel.Text = _displayNumber.ToString();
             }
         }
 
         /// <summary>
         /// 計算基準値 (演算子→数値ボタン押下時に隠れる内部値) / Null を許可する。
         /// </summary>
-        private double? MemoryNumber { get; set; } = null;
+        private decimal? MemoryNumber { get; set; } = null;
 
         /// <summary>
         /// 直前に押下されたボタン種別
@@ -178,12 +227,13 @@ namespace Calculator
                 MemoryNumber = DisplayNumber;   // 現在表示中の値を 計算基準値 に退避し入力値をそのまま画面に出す
                 DisplayNumber = arg;            // 表示中の値をディスプレイ値に設定 / 必ず一桁になる (Int -> Double への暗黙の型変換なので本当はあまりよくない)
             }
+            // Decimal 型に変更されたことに伴い、 NaN と 無限がなくなった為ロジックをコメントアウト
             // 表示中の値が NaN または ∞の場合
-            else if(_displayNumber is double.NaN || _displayNumber is double.PositiveInfinity)
-            {
-                // 入力値をそのままセット
-                DisplayNumber = arg; 
-            }
+            //else if(_displayNumber is decimal..NaN || _displayNumber is decimal.PositiveInfinity)
+            //{
+            //    // 入力値をそのままセット
+            //    DisplayNumber = arg; 
+            //}
             else
             {
                 try
@@ -199,7 +249,7 @@ namespace Calculator
                     if (tmp.Contains(".")) { tmp.TrimStart('0'); }
 
                     // double に変換、格納
-                    DisplayNumber = double.Parse(tmp);
+                    DisplayNumber = decimal.Parse(tmp);
 
                     // 上の一連の挙動を1行でやってたけど複雑になりすぎたのでオミット(これに小数点含まない場合の0トリムオミットはきつい)
                     // boolean ? true : false 記法はお勧め () 
@@ -231,16 +281,16 @@ namespace Calculator
                     switch (LastCalculatorSymbol)
                     {
                         case ButtonType.Addition:
-                            DisplayNumber = (double)MemoryNumber + DisplayNumber;
+                            DisplayNumber = (decimal)MemoryNumber + DisplayNumber;
                             break;
                         case ButtonType.Subtraction:
-                            DisplayNumber = (double)MemoryNumber - DisplayNumber;
+                            DisplayNumber = (decimal)MemoryNumber - DisplayNumber;
                             break;
                         case ButtonType.Multiplication:
-                            DisplayNumber = (double)MemoryNumber * DisplayNumber;
+                            DisplayNumber = (decimal)MemoryNumber * DisplayNumber;
                             break;
                         case ButtonType.Division:
-                            DisplayNumber = (double)MemoryNumber / DisplayNumber;
+                            DisplayNumber = (decimal)MemoryNumber / DisplayNumber;
                             break;
                         default:
                             // 通常は入ることはないが一応入れる。
@@ -267,16 +317,17 @@ namespace Calculator
             }
             catch (DivideByZeroException e)
             {
-                // 0 で割ってもここに入らないことが判明(びっくり)
-                ResultLabel.Text = "ゼロで割ることはできません。 / " + e.Message;
+                MessageBox.Show("ゼロで割ることはできません。");
 
-                // 本来ならクリアボタンをすべて非制御にする、など
+                // 本来ならクリアボタンをすべて非制御にする、など。代理で初期化とする
+                Initialize();
             }
             catch (Exception e)
             {
-                ResultLabel.Text = GetErrorMessage(e);
-                
-                // 本来ならクリアボタンをすべて非制御にする、など
+                MessageBox.Show(GetErrorMessage(e));
+
+                // 原因不明のエラーの場合はアプリケーションを落とす
+                this.Dispose();
             }
         }
 
