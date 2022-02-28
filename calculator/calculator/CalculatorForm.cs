@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Windows.Forms;
 
+using Calculator.Enum;              // Enumクラス
+
 namespace calculator
 {
 
@@ -10,14 +12,59 @@ namespace calculator
     public partial class CalculatorForm : Form
     {
 
-        // 計算結果
-        double _result = 0; 
+        #region *** クラス変数 / プロパティ ***
 
-        // 最後に押された演算ボタン
-        string _operator = "";
+        /// <summary>
+        /// 画面表示値(変数)
+        /// Tips:プロパティで画面表示を連動させる副作用を用意するため用意。
+        /// </summary>
+        private decimal _displayNumber = 0;
 
-        // 結果表示ラベルのクリアフラグ
-        bool _clearFlag = false;
+        /// <summary>
+        /// 画面表示値
+        /// </summary>
+        private decimal DisplayNumber
+        {
+            get { return _displayNumber; }
+            set
+            {
+                _displayNumber = value;
+                DisplayNumberLabel.Text = _displayNumber.ToString();
+            }
+        }
+
+        /// <summary>
+        /// 計算基準値 (演算子→数値ボタン押下時に隠れる内部値) / Null を許可する。
+        /// </summary>
+        private decimal? MemoryNumber { get; set; } = null;
+
+        /// <summary>
+        /// 直前に押下されたボタン種別
+        /// </summary>
+        ButtonType ButtonType { get; set; } = ButtonType.Undefined;
+        
+        /// <summary>
+        /// 直前に押されたボタン四則演算子か否か
+        /// </summary>
+        private bool IsCalcurator
+        {
+            get
+            {
+                return ButtonType == ButtonType.Addition
+                    || ButtonType == ButtonType.Subtraction
+                    || ButtonType == ButtonType.Multiplication
+                    || ButtonType == ButtonType.Division;
+            }
+        }
+
+        /// <summary>
+        /// 最後に押下された演算子の種別
+        /// </summary>
+        private ButtonType LastCalculatorSymbol { get; set; } = ButtonType.Undefined;
+
+        #endregion
+
+        #region *** コンストラクタ ***
 
         /// <summary>
         /// コンストラクタ
@@ -27,79 +74,64 @@ namespace calculator
             InitializeComponent();
         }
 
+        #endregion
+        
+        #region *** イベントハンドラ ***
+
         /// <summary> 
         /// 0～9 ボタンクリック
         /// </summary>
         private void NumberButton_Click(object sender, EventArgs e)
         {
-            // 前に演算ボタン押されてる場合はは表示ラベルクリア
-            if (_clearFlag == true) {
-                ResultLabel.Text = "";
-                _clearFlag = false;
-            }
-
-            // 結果表示
-            if (ResultLabel.Text.IndexOf(".") > 0) {
-                // 小数点ありの場合はそのまま追加
-                ResultLabel.Text += ((Button)sender).Text;
-            } else {
-                // 整数の場合の先頭0を削除
-                ResultLabel.Text = ResultLabel.Text.TrimStart(new Char[] { '0' }) + ((Button)sender).Text;
-            }
+            SetNumber(int.Parse(((Button)sender).Text));
         }
 
         /// <summary> 
         /// .  ボタンクリック
         /// </summary>
-        private void PointButton_Click(object sender, EventArgs e)
+        private void PeriodButton_Click(object sender, EventArgs e)
         {
-            // すでに「.」があればここで抜ける
-            if(ResultLabel.Text.IndexOf(".") > 0) { return; }
-
-            // 結果ラベルへ「.」を追加表示
-            ResultLabel.Text += ".";
+            ButtonType = ButtonType.Period;
         }
 
         /// <summary> 
         /// 足し算（＋）ボタンクリック
         /// </summary>
-        private void SumButton_Click(object sender, EventArgs e)
+        private void AdditionButton_Click(object sender, EventArgs e)
         {
-            ResultData("+");
+            Calcurate(ButtonType.Addition);
         }
 
         /// <summary> 
         /// 引き算（ー）ボタンクリック
         /// </summary>
-        private void DifferenceButton_Click(object sender, EventArgs e)
+        private void SubtractionButton_Click(object sender, EventArgs e)
         {
-            ResultData("-");
+            Calcurate(ButtonType.Subtraction);
         }
 
         /// <summary> 
         /// 掛け算（×）ボタンクリック
         /// </summary>
-        private void ProductButton_Click(object sender, EventArgs e)
+        private void MultiplicationButton_Click(object sender, EventArgs e)
         {
-            ResultData("*");
+            Calcurate(ButtonType.Multiplication);
         }
 
         /// <summary> 
         /// 割り算（÷）ボタンクリック
         /// </summary>
-        private void QuotientButton_Click(object sender, EventArgs e)
+        private void DivisionButton_Click(object sender, EventArgs e)
         {
-            ResultData("/");
+            Calcurate(ButtonType.Division);
         }
 
         /// <summary> 
         /// 計算（=）ボタンクリック
         /// </summary>
-        private void CalculationButton_Click(object sender, EventArgs e)
+        private void EqualButton_Click(object sender, EventArgs e)
         {
-            ResultData("=");
-            _operator = "";
-            _result = 0;
+            Calcurate(ButtonType.Equal);
         }
 
         /// <summary> 
@@ -107,52 +139,147 @@ namespace calculator
         /// </summary>
         private void ClearButton_Click(object sender, EventArgs e)
         {
-            _operator = "";
-            _result = 0;
-            ResultLabel.Text = "0";
+            Initialize();
+        }
+
+        #endregion
+
+        #region *** プライベートモジュール ***
+
+        /// <summary>
+        /// 初期化を実施します。
+        /// </summary>
+        private void Initialize()
+        {
+
+            ButtonType = ButtonType.Undefined;              // 押下されたボタン種別 を初期化
+            LastCalculatorSymbol = ButtonType.Undefined;    // 最後に押下された四則演算種別 を初期化
+            DisplayNumber = 0;                              // Display 表示を 0 に設定
+            MemoryNumber = null;                            // 計算基準値 を初期化
+        }
+
+        /// <summary>
+        /// 数値をセットします。
+        /// </summary>
+        /// <param name="arg">ボタンで押下された入力値</param>
+        private void SetNumber(int arg)
+        {
+            // 直前の押下ボタンが演算子系統である場合
+            if (IsCalcurator)
+            {
+                MemoryNumber = DisplayNumber;   // 現在表示中の値を 計算基準値 に退避し入力値をそのまま画面に出す
+                DisplayNumber = arg;            // 表示中の値をディスプレイ値に設定 / 必ず一桁になる (Int -> Double への暗黙の型変換なので本当はあまりよくない)
+            }
+            else
+            {
+                try
+                {
+                    // 直前に押下されたボタンが "." かつ、現在表示中の値に小数点がない場合は "."  を付与する。                
+                    string tmp = _displayNumber.ToString();
+                    if (ButtonType == ButtonType.Period && _displayNumber % 1 == 0) { tmp += "."; }
+
+                    // 実際の入力値を追加
+                    tmp += arg.ToString();
+
+                    // 小数点を含まない場合先頭の '0' トリム実施
+                    if (tmp.Contains(".")) { tmp.TrimStart('0'); }
+
+                    // double に変換、格納
+                    DisplayNumber = decimal.Parse(tmp);
+                }
+                catch (Exception e)
+                {
+                    DisplayNumberLabel.Text = GetErrorMessage(e);
+
+                    // 本来ならクリアボタンをすべて非制御にする、など
+                }
+            }
+
+            ButtonType = ButtonType.Numeric;
         }
 
         /// <summary> 
-        /// 四則演算処理メソッド
+        /// 四則演算の実施
         /// </summary>
-        /// <param name="operatorButton">押されたボタン(+-*/=)</param>
-        private void ResultData(string operatorButton)
+        /// <param name="buttonType">押下されたボタン種別</param>
+        private void Calcurate(ButtonType buttonType)
         {
-            // 数値に変換
-            double result = 0;
-            double number = double.Parse(ResultLabel.Text);
-
-            // 連続して演算ボタンは押された場合はここで抜ける
-            if (_clearFlag) {
-                return;
-            }
-            
-            // 計算条件が揃っている場合は計算して表示する
-            if (number != 0 && _result != 0 && _operator != "") {
-                switch (_operator)
+            try
+            {
+                // 計算基準値が存在する場合、演算を実施する
+                if (MemoryNumber != null)
                 {
-                    case "+":
-                        result = _result + number;
-                        break;
-                    case "-":
-                        result = _result - number;
-                        break;
-                    case "*":
-                        result = _result * number;
-                        break;
-                    case "/":
-                        result = _result / number;
-                        break;
+                    switch (LastCalculatorSymbol)
+                    {
+                        case ButtonType.Addition:
+                            DisplayNumber = (decimal)MemoryNumber + DisplayNumber;
+                            break;
+                        case ButtonType.Subtraction:
+                            DisplayNumber = (decimal)MemoryNumber - DisplayNumber;
+                            break;
+                        case ButtonType.Multiplication:
+                            DisplayNumber = (decimal)MemoryNumber * DisplayNumber;
+                            break;
+                        case ButtonType.Division:
+                            DisplayNumber = (decimal)MemoryNumber / DisplayNumber;
+                            break;
+                        default:
+                            // 通常は入ることはないが一応入れる。
+                            // 実際に例外は発生していないが、異常事態なので例外をスロー
+                            throw new Exception("演算子の判定異常");
+                    }
+
+                    // 表示中の内容を 計算基準値 に複写
+                    MemoryNumber = null;
                 }
-                ResultLabel.Text = result.ToString();
-            } else  {
-                result = number;
+                else
+                {
+                    MemoryNumber = DisplayNumber;
+                }
+
+                // 直前に押下されたボタン内容を保存
+                ButtonType = buttonType;
+                if (IsCalcurator)
+                {
+                    // 四則演算系統であればそれも保持
+                    LastCalculatorSymbol = ButtonType;
+                }
+
+            }
+            catch (DivideByZeroException e)
+            {
+                // 0 で割ってもここに入らないことが判明(びっくり)
+                DisplayNumberLabel.Text = "ゼロで割ることはできません。 / " + e.Message;
+
+                // 本来ならクリアボタンをすべて非制御にする、など
+            }
+            catch (Exception e)
+            {
+                DisplayNumberLabel.Text = GetErrorMessage(e);
+
+                // 本来ならクリアボタンをすべて非制御にする、など
+            }
+        }
+
+        /// <summary>
+        /// 例外内のエラーメッセージを再帰的に取得し、 / で連結します。
+        /// </summary>
+        /// <param name="e">例外</param>
+        /// <returns></returns>
+        private string GetErrorMessage(Exception e)
+        {
+            string ret = e.Message;
+            if (e.InnerException != null)
+            {
+                // InnnerException が存在する場合、自身(GetErrorMessage() を呼び出す)
+                ret += " / " + GetErrorMessage(e.InnerException);
             }
 
-            // 変数へ設定
-            _result = result;
-            _operator = operatorButton;
-            _clearFlag = true;
+            return ret;
         }
+
+        #endregion
+
     }
+
 }
