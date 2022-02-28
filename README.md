@@ -9,7 +9,7 @@ C# (Visual Studio 2017)
 | バージョン | 内容 |
 ----|---- 
 | Ver1.00 | 小数点を含む基本的な四則演算ができること |
-| - | - |  
+| Ver1.10 | エラー処理対応及びコードレビューによる修正 |  
 
 
 # 電卓アプリを作る目的
@@ -31,6 +31,8 @@ https://user-images.githubusercontent.com/97945555/153132339-2b9f6ccd-f600-4c45-
 | 主なコード | 内容 |
 ----|---- 
 | [CalculatorForm.cs](https://github.com/rikaa-se/calculator/blob/main/calculator/calculator/CalculatorForm.cs) | 電卓アプリ画面 |
+| [enums.cs](https://github.com/rikaa-se/calculator/blob/main/calculator/calculator/enums.cs) | 列挙体(enum)クラス |
+
   
 
 # コードレビュー
