@@ -31,7 +31,7 @@ https://user-images.githubusercontent.com/97945555/153132339-2b9f6ccd-f600-4c45-
 | 主なコード | 内容 |
 ----|---- 
 | [CalculatorForm.cs](https://github.com/rikaa-se/calculator/blob/main/calculator/calculator/CalculatorForm.cs) | 電卓アプリ画面 |
-| [enums.cs](https://github.com/rikaa-se/calculator/blob/main/calculator/calculator/enums.cs) | 列挙体(enum)クラス |
+| [enums.cs](https://github.com/rikaa-se/calculator/blob/main/calculator/calculator/Enums.cs) | 列挙体(enum)クラス |
 
   
 
